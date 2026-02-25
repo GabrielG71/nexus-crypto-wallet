@@ -1,27 +1,44 @@
-import {
-  Injectable,
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CoinGeckoService } from './coingecko.service';
 import { SwapDto } from './dto/swap.dto';
+import { QuoteDto } from './dto/quote.dto';
 import { Decimal } from 'decimal.js';
 import { LedgerEntryType } from '@prisma/client';
 
-// Taxas de câmbio simuladas (em produção viria de uma API externa)
-const MOCK_RATES: Record<string, Record<string, string>> = {
-  BRL: { BTC: '0.000005', ETH: '0.00008', USDT: '0.20', USDC: '0.20' },
-  BTC: { BRL: '200000', ETH: '16', USDT: '40000', USDC: '40000' },
-  ETH: { BRL: '12500', BTC: '0.0625', USDT: '2500', USDC: '2500' },
-  USDT: { BRL: '5', BTC: '0.000025', ETH: '0.0004', USDC: '1' },
-  USDC: { BRL: '5', BTC: '0.000025', ETH: '0.0004', USDT: '1' },
-};
-
-const FEE_PERCENT = new Decimal('0.01'); // 1%
+const FEE_PERCENT = new Decimal('0.015'); // 1.5%
 
 @Injectable()
 export class SwapService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private coinGecko: CoinGeckoService,
+  ) {}
+
+  async quote(dto: QuoteDto) {
+    if (dto.fromToken === dto.toToken) {
+      throw new BadRequestException('Cannot quote same token');
+    }
+
+    const amount = new Decimal(dto.amount);
+    if (amount.lte(0)) throw new BadRequestException('Amount must be positive');
+
+    const rate = new Decimal(await this.coinGecko.getRate(dto.fromToken, dto.toToken));
+    const fee = amount.mul(FEE_PERCENT);
+    const amountAfterFee = amount.minus(fee);
+    const toAmount = amountAfterFee.mul(rate);
+
+    return {
+      fromToken: dto.fromToken,
+      toToken: dto.toToken,
+      fromAmount: amount.toFixed(18),
+      toAmount: toAmount.toFixed(18),
+      fee: fee.toFixed(18),
+      feePercent: '1.5',
+      rate: rate.toFixed(18),
+      cached: true,
+    };
+  }
 
   async swap(userId: string, dto: SwapDto) {
     if (dto.fromToken === dto.toToken) {
@@ -31,9 +48,7 @@ export class SwapService {
     const amount = new Decimal(dto.amount);
     if (amount.lte(0)) throw new BadRequestException('Amount must be positive');
 
-    const rate = new Decimal(MOCK_RATES[dto.fromToken]?.[dto.toToken] ?? '0');
-    if (rate.isZero()) throw new BadRequestException('Exchange rate not available');
-
+    const rate = new Decimal(await this.coinGecko.getRate(dto.fromToken, dto.toToken));
     const fee = amount.mul(FEE_PERCENT);
     const amountAfterFee = amount.minus(fee);
     const toAmount = amountAfterFee.mul(rate);
@@ -46,7 +61,6 @@ export class SwapService {
 
     const fromBalance = wallet.balances.find((b) => b.token === dto.fromToken);
     const toBalance = wallet.balances.find((b) => b.token === dto.toToken);
-
     if (!fromBalance || !toBalance) throw new NotFoundException('Balance not found');
 
     const fromBefore = new Decimal(fromBalance.amount.toString());
@@ -116,6 +130,7 @@ export class SwapService {
       fromAmount: amount.toFixed(18),
       toAmount: toAmount.toFixed(18),
       fee: fee.toFixed(18),
+      feePercent: '1.5',
       rate: rate.toFixed(18),
     };
   }
