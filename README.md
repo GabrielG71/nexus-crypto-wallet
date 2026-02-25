@@ -95,6 +95,14 @@ O ambiente ficará disponível por aproximadamente 1 mês a partir da data de en
 
 ---
 
+## Aviso — Rate limit da API de cotações
+
+As cotações de swap utilizam a **API pública gratuita da CoinGecko**, que impõe um limite de requisições por minuto. O cache Redis minimiza bastante esse problema no uso normal, mas caso você execute várias cotações em sequência muito rápida, é possível receber um erro temporário de rate limit — isso é uma limitação da camada externa, não do código em si.
+
+Se isso acontecer durante a avaliação, basta aguardar alguns segundos e tentar novamente.
+
+---
+
 ## Como rodar localmente
 
 **Pré-requisito:** Docker e Docker Compose instalados.
