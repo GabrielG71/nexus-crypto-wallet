@@ -3,7 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
@@ -15,9 +15,9 @@ import { Token } from '@prisma/client';
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaService,
-    private jwt: JwtService,
-    private config: ConfigService,
+    private readonly prisma: PrismaService,
+    private readonly jwt: JwtService,
+    private readonly config: ConfigService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -86,6 +86,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
+    // Revoga o refresh atual (rotation)
     await this.prisma.refreshToken.update({
       where: { id: stored.id },
       data: { revoked: true },
@@ -114,11 +115,20 @@ export class AuthService {
   private async generateTokens(userId: string, email: string) {
     const payload = { sub: userId, email };
 
-    const accessToken = this.jwt.sign(payload, {
-      secret: this.config.get<string>('JWT_ACCESS_SECRET'),
-      expiresIn:
-        this.config.get<string>('JWT_ACCESS_EXPIRES_IN') || '15m',
-    });
+    const accessSecret = this.config.get<string>('JWT_ACCESS_SECRET');
+    if (!accessSecret) {
+      throw new Error('JWT_ACCESS_SECRET is not defined');
+    }
+
+    const expiresIn =
+      this.config.get<string>('JWT_ACCESS_EXPIRES_IN') ?? '15m';
+
+    const signOptions: JwtSignOptions = {
+      secret: accessSecret,
+      expiresIn: expiresIn as JwtSignOptions['expiresIn'],
+    };
+
+    const accessToken = this.jwt.sign(payload, signOptions);
 
     const refreshToken = uuidv4();
 
