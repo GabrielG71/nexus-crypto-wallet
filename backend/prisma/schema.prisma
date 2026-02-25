@@ -1,15 +1,136 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// Enums
+
+enum Token {
+  BRL
+  BTC
+  ETH
+  USDT
+  USDC
+}
+
+enum LedgerEntryType {
+  DEPOSIT
+  SWAP_IN
+  SWAP_OUT
+  SWAP_FEE
+  WITHDRAWAL
+}
+
+enum TransactionType {
+  DEPOSIT
+  SWAP
+  WITHDRAWAL
+}
+
+// Models
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  wallet        Wallet?
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balances     Balance[]
+  transactions Transaction[]
+
+  @@map("wallets")
+}
+
+model Balance {
+  id        String   @id @default(uuid())
+  walletId  String   @map("wallet_id")
+  token     Token
+  amount    Decimal  @default(0) @db.Decimal(36, 18)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  wallet        Wallet        @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  ledgerEntries LedgerEntry[]
+
+  @@unique([walletId, token])
+  @@map("balances")
+}
+
+model LedgerEntry {
+  id            String          @id @default(uuid())
+  balanceId     String          @map("balance_id")
+  type          LedgerEntryType
+  token         Token
+  amount        Decimal         @db.Decimal(36, 18)
+  balanceBefore Decimal         @map("balance_before") @db.Decimal(36, 18)
+  balanceAfter  Decimal         @map("balance_after") @db.Decimal(36, 18)
+  transactionId String?         @map("transaction_id")
+  createdAt     DateTime        @default(now()) @map("created_at")
+
+  balance     Balance      @relation(fields: [balanceId], references: [id])
+  transaction Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@index([balanceId])
+  @@index([transactionId])
+  @@map("ledger_entries")
+}
+
+model Transaction {
+  id         String          @id @default(uuid())
+  walletId   String          @map("wallet_id")
+  type       TransactionType
+  fromToken  Token?          @map("from_token")
+  toToken    Token?          @map("to_token")
+  fromAmount Decimal?        @map("from_amount") @db.Decimal(36, 18)
+  toAmount   Decimal?        @map("to_amount") @db.Decimal(36, 18)
+  feeAmount  Decimal?        @map("fee_amount") @db.Decimal(36, 18)
+  rate       Decimal?        @db.Decimal(36, 18)
+  createdAt  DateTime        @default(now()) @map("created_at")
+
+  wallet        Wallet        @relation(fields: [walletId], references: [id])
+  ledgerEntries LedgerEntry[]
+
+  @@index([walletId])
+  @@map("transactions")
+}
+
+model DepositIdempotency {
+  id             String   @id @default(uuid())
+  idempotencyKey String   @unique @map("idempotency_key")
+  userId         String   @map("user_id")
+  token          Token
+  amount         Decimal  @db.Decimal(36, 18)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("deposit_idempotency")
 }
