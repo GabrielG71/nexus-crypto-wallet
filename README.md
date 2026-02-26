@@ -87,8 +87,7 @@ Listagem paginada das transações do usuário com tipo (`DEPOSIT`, `SWAP`, `WIT
 
 O projeto está rodando em servidor dedicado e pode ser acessado diretamente:
 
-- Front-end: **http://187.77.59.231:3001**
-- API: **http://187.77.59.231:3000**
+- **http://187.77.59.231**
 
 O ambiente ficará disponível por aproximadamente 1 mês a partir da data de entrega.
 
