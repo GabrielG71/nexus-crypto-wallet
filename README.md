@@ -61,6 +61,8 @@ Na execução, o sistema valida o saldo (incluindo taxa), debita o token de orig
 
 Valida saldo suficiente, debita o token solicitado e registra a transação e a movimentação no ledger. A transferência em si é mock, conforme especificado no teste.
 
+![Saque](./assets/09-withdrawal.png)
+
 ### Ledger — extrato de movimentações
 
 Toda alteração de saldo gera um registro no ledger com tipo, token, valor, saldo anterior, saldo novo e data/hora. O saldo pode ser reconstruído integralmente a partir das movimentações.
