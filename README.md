@@ -2,9 +2,6 @@
 
 > **O projeto está no ar.** Você pode acessar e testar tudo em funcionamento em:
 > **http://187.77.59.231** *(disponível por aproximadamente 1 mês)*
->
-> — Front-end: http://187.77.59.231:3001  
-> — API: http://187.77.59.231:3000
 
 ---
 
@@ -40,7 +37,7 @@ Cadastro com e-mail e senha, login retornando access token e refresh token (JWT)
 
 ### Carteira e saldos
 
-Ao se cadastrar, o usuário recebe uma carteira com saldo zero. A carteira suporta BRL, BTC e ETH. Os saldos são armazenados via modelo de ledger e são sempre auditáveis.
+Ao se cadastrar, o usuário recebe uma carteira com saldo zero. A carteira suporta BRL, BTC, ETH, USDT e USDC. Os saldos são armazenados via modelo de ledger e são sempre auditáveis.
 
 ![Dashboard](./assets/03-dashboard.png)
 
@@ -92,6 +89,14 @@ O projeto está rodando em servidor dedicado e pode ser acessado diretamente:
 - API: **http://187.77.59.231:3000**
 
 O ambiente ficará disponível por aproximadamente 1 mês a partir da data de entrega.
+
+---
+
+## Aviso — Rate limit da API de cotações
+
+As cotações de swap utilizam a **API pública gratuita da CoinGecko**, que impõe um limite de requisições por minuto. O cache Redis minimiza bastante esse problema no uso normal, mas caso você execute várias cotações em sequência muito rápida, é possível receber um erro temporário de rate limit — isso é uma limitação da camada externa, não do código em si.
+
+Se isso acontecer durante a avaliação, basta aguardar alguns segundos e tentar novamente.
 
 ---
 
