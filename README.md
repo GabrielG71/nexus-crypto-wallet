@@ -2,9 +2,6 @@
 
 > **O projeto está no ar.** Você pode acessar e testar tudo em funcionamento em:
 > **http://187.77.59.231** *(disponível por aproximadamente 1 mês)*
->
-> — Front-end: http://187.77.59.231:3001  
-> — API: http://187.77.59.231:3000
 
 ---
 
