@@ -37,7 +37,7 @@ Cadastro com e-mail e senha, login retornando access token e refresh token (JWT)
 
 ### Carteira e saldos
 
-Ao se cadastrar, o usuário recebe uma carteira com saldo zero. A carteira suporta BRL, BTC e ETH. Os saldos são armazenados via modelo de ledger e são sempre auditáveis.
+Ao se cadastrar, o usuário recebe uma carteira com saldo zero. A carteira suporta BRL, BTC, ETH, USDT e USDC. Os saldos são armazenados via modelo de ledger e são sempre auditáveis.
 
 ![Dashboard](./assets/03-dashboard.png)
 
