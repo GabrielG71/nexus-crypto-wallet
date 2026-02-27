@@ -113,7 +113,22 @@ cd nexus-crypto-wallet
 # 2. Suba os containers
 docker compose up -d --build
 
-# 3. Acesse
+# 4. Configure as variáveis de ambiente
+
+Crie o arquivo `docker/.env` com o seguinte conteúdo:
+
+POSTGRES_USER=nexus
+POSTGRES_PASSWORD=nexus_secret
+POSTGRES_DB=nexus_wallet
+DATABASE_URL=postgresql://nexus:nexus_secret@postgres:5432/nexus_wallet
+JWT_ACCESS_SECRET=troque_por_uma_chave_segura
+JWT_REFRESH_SECRET=troque_por_outra_chave_segura
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+COINGECKO_API_KEY=sua_chave_aqui
+
+(Se julgar necessário, crie a .env no backend ou frontend e coloque as variaveis por lá)
+
+# 4. Acesse
 # Front-end: http://localhost:3001
 # API:       http://localhost:3000
 ```
